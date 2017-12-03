@@ -44,6 +44,25 @@ let input = """
 296	306	1953	3538	248	1579	4326	2178	5021	2529	794	5391	4712	3734	261	4362
 2426	192	1764	288	4431	2396	2336	854	2157	216	4392	3972	229	244	4289	1902"""
 
+let testInput2 = """
+5 9 2 8
+9 4 7 3
+3 8 6 5"""
+
+let getEvenlyDivisiblePairs (xs : int seq) =
+    seq { for x in xs do for y in xs -> (x, y) }
+    |> Seq.where (fun (x, y) -> (x <> y) && (x % y = 0))
+
+let getEvenDivisionResults (xs : int seq) =
+    getEvenlyDivisiblePairs xs
+    |> Seq.map (fun (x, y) -> x / y)
+
+let calculateCheckSum2From (sheet : string) =
+    splitIntoRows sheet
+    |> Seq.map (parseRow >> getEvenDivisionResults >> Seq.exactlyOne)
+    |> Seq.sum
+
+
 [<EntryPoint>]
 let main argv =
     let testRows = splitIntoRows testInput
@@ -53,4 +72,13 @@ let main argv =
     calculateCheckSumFrom testInput =! 18
 
     printfn "Part 1: %d" (calculateCheckSumFrom input)
+
+    let testRows2 = splitIntoRows testInput2
+    (getEvenDivisionResults (parseRow testRows2.[0]) |> Seq.exactlyOne) =! 4
+    (getEvenDivisionResults (parseRow testRows2.[1]) |> Seq.exactlyOne) =! 3
+    (getEvenDivisionResults (parseRow testRows2.[2]) |> Seq.exactlyOne) =! 2
+    calculateCheckSum2From testInput2 =! 9
+
+    printfn "Part 2: %d" (calculateCheckSum2From input)
+
     0 // return an integer exit code

@@ -2,8 +2,13 @@
 
 open TextHandling
 
-let isPassPhraseValid (phrase : string) =
+// The 'canonize' argument lets us transform the strings before testing for uniqueness.
+// If you wanted to disallow strings that vary only by upper/lowercase for example, you
+// could provide a function that forces strings to uppercase here.
+// Part 1 doesn't need this, but we use it in Part 2.
+let isPassPhraseValidCore canonize (phrase : string) =
     phrase.Split([|' ';'\t'|])
+    |> Seq.map canonize
     |> Seq.scan
         (fun (invalid, words : Set<string>) word ->
             if invalid then
@@ -13,6 +18,9 @@ let isPassPhraseValid (phrase : string) =
         (false, Set.empty)
     |> Seq.exists fst
     |> not
+
+
+let isPassPhraseValid = isPassPhraseValidCore id
 
 let input = """
 kvvfl kvvfl olud wjqsqa olud frc
@@ -528,6 +536,21 @@ mhvisju lhmdbs tcxied xeidtc ujry cditex gvqpqm
 cgc jazrp crgnna uvuokl uvuokl uoiwl sknmc sknmc
 rvbu czwpdit vmlihg spz lfaxxev zslfuto oog dvoksub"""
 
+
+
+// The Part 2 version of this requires not just that each word be
+// unique, it also requires that none be an anagram of an other. The
+// easiest way to do this is to come up with a canonical form for
+// a string in which two words that are anagrams of each other always
+// have the same canonical form. We do this by simply sorting all the
+// letters in a word. E.g. "gfedcba" canonicalizes as "abcdefg". The
+// word "letters" becomes "eelrst".
+
+let isPassPhraseValid2 =
+    let sortStringChars = Seq.sort >> Array.ofSeq >> System.String
+    isPassPhraseValidCore sortStringChars
+
+
 [<EntryPoint>]
 let main argv = 
     isPassPhraseValid "aa bb cc dd ee" =! true
@@ -539,5 +562,19 @@ let main argv =
         |> Seq.filter isPassPhraseValid
         |> Seq.length
 
-    printfn "%d" validPassPhraseCount
-    0 // return an integer exit code
+    printfn "Part 1: %d" validPassPhraseCount
+
+    isPassPhraseValid2 "abcde fghij" =! true
+    isPassPhraseValid2 "abcde xyz ecdab" =! false
+    isPassPhraseValid2 "a ab abc abd abf abj" =! true
+    isPassPhraseValid2 "iiii oiii ooii oooi oooo" =! true
+    isPassPhraseValid2 "oiii ioii iioi iiio" =! false
+
+    let validPassPhraseCount2 =
+        splitIntoRows input
+        |> Seq.filter isPassPhraseValid2
+        |> Seq.length
+
+    printfn "Part 2: %d" validPassPhraseCount2
+
+    0

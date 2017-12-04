@@ -1,5 +1,7 @@
 ﻿open Swensen.Unquote
 
+open TextHandling
+
 let getMinMax (xs : int seq) =
     xs
     |> Seq.fold
@@ -18,8 +20,6 @@ let testInput = """
 5 1 9 5
 7 5 3
 2 4 6 8"""
-
-let splitIntoRows (sheet : string )= sheet.Split([|'\n';'\r'|], System.StringSplitOptions.RemoveEmptyEntries)
 
 let calculateCheckSumFrom (sheet : string) =
     splitIntoRows sheet

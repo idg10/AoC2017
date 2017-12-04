@@ -36,11 +36,41 @@ let manhattanDistance (x, y) = (abs x) + (abs y)
 
 let distanceForSquare = getPosition >> manhattanDistance
 
+let testSequence =
+    Seq.unfold
+        (fun (i, values : Map<int*int, int>) ->
+            let next = i + 1
+            let (nx, ny) = getPosition next
+            let getValue p =
+                match Map.tryFind p values with
+                | Some v -> v
+                | None -> 0
+            let sum =
+                (getValue (nx - 1, ny - 1)) +
+                (getValue (nx,     ny - 1)) +
+                (getValue (nx + 1, ny - 1)) +
+                (getValue (nx - 1, ny)) +
+                (getValue (nx + 1, ny)) +
+                (getValue (nx- 1, ny + 1)) +
+                (getValue (nx, ny + 1)) +
+                (getValue (nx + 1, ny + 1))
+
+            Some (values.[getPosition i], (next, Map.add (nx, ny) sum values)))
+        (1, (Map.empty |> Map.add (0, 0) 1))
+
 [<EntryPoint>]
 let main argv =
     distanceForSquare 1 =! 0
     distanceForSquare 12 =! 3
     distanceForSquare 23 =! 2
     distanceForSquare 1024 =! 31
-    printfn "%d" (distanceForSquare 347991)
+    printfn "Part 1: %d" (distanceForSquare 347991)
+
+    let initialExpectedTestSequence = [1; 1; 2; 4; 5; 10; 11; 23; 25; 26; 54; 57; 59; 122; 133; 142; 147; 304; 330; 351; 362; 747; 806]
+    testSequence |> Seq.take (List.length initialExpectedTestSequence) |> List.ofSeq =! initialExpectedTestSequence
+
+    let firstLarger =
+        testSequence
+        |> Seq.find (fun v -> v > 347991)
+    printfn "Part 2: %d" firstLarger
     0 // return an integer exit code

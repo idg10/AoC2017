@@ -38,15 +38,35 @@ let redistribute (banks : int list) =
             if i = indexToRedistribute then amountToAdd
             else v + amountToAdd)
 
-let redistributions (banks : int list) =
+let rawRedistributions (banks : int list) =
     Seq.unfold
-        (fun (currentBanks : int list, distributionsSoFar : Set<int list>) ->
-            if Set.contains currentBanks distributionsSoFar then None
-            else
-                let newDistribution = redistribute currentBanks
-                Some (currentBanks, (newDistribution, Set.add currentBanks distributionsSoFar)))
-        (banks, Set.empty)
-            
+        (fun currentBanks ->
+            let newDistribution = redistribute currentBanks
+            Some (currentBanks, newDistribution))
+        banks
+
+let distributionsAndLastSeenIndex (banks : int list) =
+    rawRedistributions banks
+    |> Seq.scan
+        (fun (previousI : int, _ : int option, _ : int list, alreadySeen : Map<int list, int>) (distribution : int list) ->
+            let i = previousI + 1
+            let newDistribution = redistribute distribution
+            let previousIndex = Map.tryFind newDistribution alreadySeen
+            let alreadySeen =
+                match previousIndex with
+                | Some _ -> alreadySeen
+                | None -> Map.add newDistribution i alreadySeen
+            (i, previousIndex, newDistribution, alreadySeen))
+        (0, None, banks, Map.add banks 0 Map.empty)
+
+let redistributions (banks : int list) =
+    distributionsAndLastSeenIndex banks
+    |> Seq.takeWhile (fun (_, previous, _, _) -> previous.IsNone)
+    |> Seq.map (fun (_, _, d, _) -> d)
+
+let findLoopLength (banks : int list) =
+    let (i, previousIndex, _, _) = distributionsAndLastSeenIndex banks |> Seq.find (fun (_, previous, _, _) -> previous.IsSome)
+    i - previousIndex.Value
 
 let input = "14	0	15	12	11	11	3	5	1	6	8	4	9	1	8	4"
 let inputList = input.Split(' ', '\t') |> Seq.map int |> List.ofSeq
@@ -61,6 +81,8 @@ let main argv =
     testRedistributions.[3] =! [0;2;3;4]
     testRedistributions.[4] =! [1;3;4;1]
 
-
     printfn "Part 1: %d" (redistributions inputList |> Seq.length)
-    0 // return an integer exit code
+    
+    findLoopLength testInput =! 4
+    printfn "Part 2: %d" (findLoopLength inputList)
+    0

@@ -86,6 +86,23 @@ let testPrograms =
     splitIntoRows testInput
     |> Seq.map (testp pInputLine)
 
+
+let rec getWeightAndImbalancedDescendants (allPrograms : Map<string, Program>) (programName : string) : (int * (string * (string * int) list) list) =
+    let p = allPrograms.[programName]
+    let childResults =
+        p.onTop
+        |> Seq.map (getWeightAndImbalancedDescendants allPrograms)
+        |> List.ofSeq
+    let weights = List.map fst childResults
+    let totalChildWeights = List.sum weights
+    let descendentImbalances = childResults |> List.map snd |> List.collect id
+    let imbalances =
+        if Seq.distinctBy fst childResults |> Seq.length > 1 then
+            (programName, List.zip p.onTop weights) :: descendentImbalances
+        else descendentImbalances
+    (totalChildWeights + p.weight, imbalances)
+    
+
 [<EntryPoint>]
 let main argv =
     // Parser tests    
@@ -106,7 +123,48 @@ let main argv =
     let input =
         getEmbeddedRows ()
         |> Seq.map (testp pInputLine)
-    let (_, unparented) = findRoots input
+    let (programMap, unparented) = findRoots input
     let root = Seq.exactlyOne unparented
     printfn "Part 1: %s" root
+
+
+    let (testProgramMap, unparented) = findRoots testPrograms
+    let testRoot = Seq.exactlyOne unparented
+    let (weight, imbalances) = getWeightAndImbalancedDescendants testProgramMap testRoot
+    weight =! 778
+    fst imbalances.[0] =! "tknk"
+    let imbalancedChildren = snd imbalances.[0]
+    imbalancedChildren.[0] =! ("ugml", 251)
+    imbalancedChildren.[1] =! ("padx", 243)
+    imbalancedChildren.[2] =! ("fwft", 243)
+
+    let result = getWeightAndImbalancedDescendants programMap root
+    printfn "Part 2"
+    printfn "Imbalances: %A" result
+    let (weight, imbalances) = result
+    let (_, deepestImbalancedSet) = List.last imbalances
+    // Making a simplifying assumption that the imbalanced element has multiple
+    // peers, meaning that we can say that the correct weight is the one that all
+    // but one of the peers have.
+    // There is one possible cases this doesn't handle, which is when the misweighted
+    // item has exactly one peer. In that case we'd need to look at the expected parent
+    // weight to work out what the right correction is. But in practice, it seems that
+    // the misweighted items in my input is "marnqj" which is one of "jfdck"'s 5 children,
+    // enabling the simpler approach to work.
+    let (misweightedProgramName, requiredDifference) =
+        let weights = 
+            deepestImbalancedSet
+            |> Seq.groupBy snd
+            |> Seq.sortBy (fun (k, g) -> Seq.length g)
+            |> List.ofSeq
+        match weights with
+        | [(dissentingWeight, dissentingItems); (majorityWeight, _)] ->
+            let (itemName, _) = Seq.exactlyOne dissentingItems
+            (itemName, dissentingWeight - majorityWeight)
+        | _ -> failwithf "Expected exactly two groups, but got %A" weights
+    printfn "Misweighted program: %s" misweightedProgramName
+    let misweightedProgram = programMap.[misweightedProgramName]
+    printfn "Current weight: %d" misweightedProgram.weight
+    printfn "Off by: %d" requiredDifference
+    printfn "Correct weight: %d" (misweightedProgram.weight - requiredDifference)
     0

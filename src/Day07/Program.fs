@@ -2,9 +2,10 @@
 
 open System
 
-open Swensen.Unquote
 open FParsec
+open Swensen.Unquote
 
+open ParsingHelpers
 open TextHandling
 
 let pWeight<'a> : Parser<int32, 'a> = pstring "(" >>. pint32 .>> pstring ")"
@@ -30,11 +31,6 @@ let pInputLine<'a> : Parser<Program, 'a> =
                     | Some ps -> ps
                     | None -> []
             })
-
-let testp (p : Parser<'TResult, unit>) s =
-    match run p s with
-    | Success(result, _, _) -> result
-    | Failure(error, _, _) -> failwithf "Parse failed: %s" error
 
 
 // Maintain a set of candidate roots

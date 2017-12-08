@@ -5,10 +5,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="ParsingHelpers.fs" />
     <Compile Include="TextHandling.fs" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="FParsec" Version="1.0.3" />
     <PackageReference Update="FSharp.Core" Version="4.2.3" />
     <PackageReference Include="Unquote" Version="4.0.0" />
   </ItemGroup>

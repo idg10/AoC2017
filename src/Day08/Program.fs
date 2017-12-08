@@ -202,4 +202,11 @@ let main argv =
 
     printfn "Part 1: highest value %d was in register %s" part1HighestValue part1HighestReg
     printfn "Part 1: largest value %d was in register %s" part1LargestValue part1LargestReg
-    0 // return an integer exit code
+
+
+    let (regWithHighestValueSeen, highestValueSeen) =
+        inputProgramSteps
+        |> Seq.map highestRegisterValue
+        |> Seq.maxBy snd
+    printfn "Part 2: highest value at any point was %d in register %s" highestValueSeen regWithHighestValueSeen
+    0

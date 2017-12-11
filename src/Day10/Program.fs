@@ -23,7 +23,6 @@ let makeInitialPosition elementCount =
 
 
 let processMove previousStep length =
-    printfn "Processing %d" length
     let elementsWithWrap = Seq.concat [previousStep.elements; previousStep.elements]
 
     let wrappedElementsInTarget =
@@ -34,19 +33,14 @@ let processMove previousStep length =
         |> Seq.skip previousStep.currentPosition
         |> Seq.take length
         |> Seq.rev
-    
-    printfn "%A" reversedTargetSection
 
     let preWrapReversedTargetSection =
         reversedTargetSection
         |> Seq.take (length - wrappedElementsInTarget)
 
-    printfn "%A" preWrapReversedTargetSection
-
     let postWrapReversedTargetSection =
         reversedTargetSection
         |> Seq.skip (length - wrappedElementsInTarget)
-    printfn "%A" postWrapReversedTargetSection
 
     let initialSection =
         Seq.append
@@ -54,7 +48,6 @@ let processMove previousStep length =
             (Seq.take
                 (previousStep.currentPosition - wrappedElementsInTarget)
                 (Seq.skip wrappedElementsInTarget elementsWithWrap))
-    printfn "%A" initialSection
 
     let sectionAfterTarget =
         if wrappedElementsInTarget > 0 then Seq.empty
@@ -62,7 +55,6 @@ let processMove previousStep length =
             elementsWithWrap
             |> Seq.skip (previousStep.currentPosition + length)
             |> Seq.take (previousStep.elementCount - (previousStep.currentPosition + length))
-    printfn "%A" sectionAfterTarget
     {
         currentPosition = (previousStep.currentPosition + length + previousStep.skipSize) % previousStep.elementCount
         skipSize = previousStep.skipSize + 1
@@ -83,8 +75,37 @@ let treatInputAsAscii (input : string) =
     |> Seq.map int
     |> List.ofSeq
 let inputAsAscii = getEmbeddedInput () |> treatInputAsAscii
-   
 
+let convertInputToPart2List input =
+    List.append
+        (treatInputAsAscii input)
+        [17; 31; 73; 47; 23]
+
+let getSparseHash count inputText =
+    let lengths = convertInputToPart2List inputText
+    seq { 1..count }
+    |> Seq.fold
+        (fun (s: Step) _ -> Seq.fold processMove s lengths)
+        fullInitialPosition
+    |> (fun x -> x.elements)
+
+let makeDenseHash (blockSize: int) (sparseHash: int list) =
+    sparseHash
+    |> Seq.chunkBySize blockSize
+    |> Seq.map (Seq.fold (^^^) 0)
+    |> List.ofSeq
+    //|> Seq.map (fun block -> block |> Seq.fold (^^^) 0 )
+
+let denseHashToString (denseHash: int list) =
+    String.concat
+        ""
+        (denseHash |> Seq.map (fun v -> v.ToString("x2")))
+
+let hashString s =
+    let sparseHash = getSparseHash 64 s
+    let denseHash = makeDenseHash 16 sparseHash
+    denseHashToString denseHash
+    
 [<EntryPoint>]
 let main argv =
     let testSteps =
@@ -126,4 +147,18 @@ let main argv =
     let finalElements = inputFinalStep.elements
 
     printfn "Part 1: %d" (finalElements.[0] * finalElements.[1])
+
+    convertInputToPart2List "1,2,3" =! [49;44;50;44;51;17;31;73;47;23]
+
+    let testSparseHash = [65; 27; 9; 1; 4; 3; 40; 50; 91; 7; 6; 0; 2; 5; 68; 22]
+    makeDenseHash 64 testSparseHash =! [64]
+
+    hashString "" =! "a2582a3a0e66e6e86e3812dcb672a272"
+    hashString "AoC 2017" =! "33efeb34ea91902bb2f59c9920caa6cd"
+    hashString "1,2,3" =! "3efbe78a8d82f29979031a4aa0b16a9d"
+    hashString "1,2,4" =! "63960835bcdc130f0b66d7ff4f6a5a8e"
+
+    let inputText = getEmbeddedInput ()
+    let hashedInput = hashString inputText
+    printfn "Part 2: %s" hashedInput
     0 // return an integer exit code

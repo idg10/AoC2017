@@ -6,41 +6,6 @@ open Swensen.Unquote
 open ParsingHelpers
 open TextHandling
 
-// Possible coordinate systems:
-//      
-// 2,-2     2,-1    2,0     2,1      2,2
-//      1,-1    1,0     1,1     1,2 
-// 0,-1     0,0     0,1     0,2
-//     -1,0    -1,1    -1,2
-//-2,0     -2,1    -2,2    -2,3
-
-//
-// In this world:
-//  N  = (+2,-1)
-//  NE = (+1, 0)
-//  E  = (0, +1)
-//  SE = (-1,+1)
-//  S =  (-2,+1)
-//  SW = (-1, 0)
-//  W  = ( 0,-1)
-//  NW = (+1,-1)
-//
-// SE,SW,SE,SW,SW = (-1-1-1-1-1,+1+0+1+0+0) = (-5,2)
-// 
-
-//
-// Distances from origin
-//    5       4       4       4       4       5
-//        4       3       3       3       4    
-//    5       3       2       2       3       5
-//        4       2       1       2       4    
-//    5       3       1       1       3       5
-//        4       2       0       2       4    
-//    5       3       1       1       3       5
-//        4       2       1       2       4    
-//    5       3       2       2       3       5
-//        4       3       3       3       4    
-//
 // So apparently the standard solution to this is to treat the grid as
 // though it were an isometric view of a q-bert style pyramid of cubes.
 // (Each cube, when projected, becomes a hexagon.)
@@ -81,9 +46,6 @@ open TextHandling
 //  S =  (-1,+1, 0)
 //  SW = ( 0,+1,-1)
 //  NW = (+1, 0,-1)
-//
-// SE,SW,SE,SW,SW = (+1+0+1+0+0,0-1+0-1-1) = (2,-3)
-// 
 
 type Direction = | N | NE | E | SE | S | SW | W | NW
 
@@ -126,6 +88,12 @@ let streamToMoves st =
 
 let testString text = testp pMoves text |> distanceHomeAfterMoves
 
+let produceMoves (ms: Direction seq) =
+    ms
+    |> Seq.scan processMove (0,0,0)
+
+
+
 [<EntryPoint>]
 let main argv =
     testString "ne,ne,ne" =! 3
@@ -139,4 +107,10 @@ let main argv =
 
     let result = distanceHomeAfterMoves parsedInput
     printfn "Part 1: %d" result
+
+    let allMoves = produceMoves parsedInput
+    let maxDistance =
+        allMoves
+        |> Seq.maxBy distanceFromPos
+    printfn "Part 2: %d" (distanceFromPos maxDistance)
     0 // return an integer exit code

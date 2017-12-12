@@ -47,7 +47,7 @@ open TextHandling
 //  SW = ( 0,+1,-1)
 //  NW = (+1, 0,-1)
 
-type Direction = | N | NE | E | SE | S | SW | W | NW
+type Direction = | N | NE | SE | S | SW | NW
 
 let processMove (u, v, w) d =
     match d with
@@ -75,8 +75,6 @@ let pDirection<'a> : Parser<Direction, 'a> =
     <|> (stringReturn "sw" SW)
     <|> (stringReturn "se" SE)
     <|> (stringReturn "s" S)
-    <|> (stringReturn "e" E)
-    <|> (stringReturn "w" W)
 
 let pMoves<'a> : Parser<Direction list, 'a> = sepBy pDirection (spaces >>. pstring "," .>> spaces)
 

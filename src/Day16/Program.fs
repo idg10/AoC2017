@@ -7,6 +7,7 @@ open Swensen.Unquote
 
 open ParsingHelpers
 open TextHandling
+open KnotHashing
 
 type DanceStep =
     | Spin of int
@@ -31,6 +32,7 @@ let pStep<'a> : Parser<DanceStep, 'a> = pSpin <|> pExchange <|> pPartner
 let parseSteps (input: string) =
     input.Split(',')
     |> Seq.map (testp pStep)
+    |> List.ofSeq
 
 let spin size (ps: char[]) =
     let length = ps.Length
@@ -68,9 +70,30 @@ let dance (steps: DanceStep seq) (initialPositions: char[]) =
     |> Seq.scan performStep initialPositions
     |> Seq.skip 1
 
+let danceRepeatedly (steps: DanceStep seq) (initialPositions: char[]) =
+    let oneDance = dance steps >> Seq.last
+    Seq.unfold
+        (fun ps ->
+            let nextPs = oneDance ps
+            Some (nextPs, nextPs))
+        initialPositions
+
+let findRep (steps: DanceStep seq) (initialPositions: char[]) =
+    danceRepeatedly steps initialPositions
+    |> Seq.mapi (fun (i: int) (ps: char[]) -> (ps |> String, i))
+    |> Seq.scan
+        (fun (seen: Map<string, int>, _: bool, _: string, _: int) (pos, i) ->
+            let isRep = Map.containsKey pos seen
+            let newMap =
+                if isRep then seen else Map.add pos i seen
+            (newMap, isRep, pos, i))
+        (Map.empty, false, "", 0)
+    |> Seq.find (fun (_, seenBefore, _, _) -> seenBefore)
+
 [<EntryPoint>]
 let main argv =
     let shortLine = [|'a'..'e'|]
+    let fullLine = [|'a'..'p'|]
 
     //let testSteps = [Spin 1; Exchange (3, 4); Partner ('e', 'b')]
     let testSteps = parseSteps "s1,x3/4,pe/b"
@@ -82,9 +105,22 @@ let main argv =
 
     let input = getEmbeddedInput ()
     let inputSteps = parseSteps input
-    let dancePositions = dance inputSteps [|'a'..'p'|]
+    let dancePositions = dance inputSteps fullLine
     let finalPosition = dancePositions |> Seq.last
     let finalPositonAsString = finalPosition |> String
 
     printfn "Part 1: %s" finalPositonAsString
+
+    let (posToIndex, _, repeatingPosition, secondIndex) = findRep inputSteps fullLine
+    let firstIndex = posToIndex.[repeatingPosition] 
+    let repLength = secondIndex - firstIndex
+    printfn "Part 2: position '%s' appears at %d and %d, a period of %d" repeatingPosition secondIndex firstIndex repLength
+    let requiredReps = 1000000000 % repLength
+    let billionthPosition =
+        danceRepeatedly inputSteps fullLine
+        |> Seq.skip (requiredReps - 1)
+        |> Seq.take 1
+        |> Seq.exactlyOne
+        |> String
+    printfn "Part 2: %s" billionthPosition
     0

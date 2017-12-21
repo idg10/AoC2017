@@ -255,11 +255,20 @@ let main argv =
         printfn ""
 
     let finalImage = imageSteps |> Seq.last
-    let count =
-        finalImage.pixels
+    let count i =
+        i.pixels
         |> Seq.collect id
         |> Seq.filter id
         |> Seq.length
 
-    printfn "Part 1: %d" count
-    0 // return an integer exit code
+    printfn "Part 1: %d" (count finalImage)
+
+    // This is a little slow...but fast enough that it's not necessary
+    // to find a more clever way to do this.
+    let finalImage2 =
+        makeImageSteps ruleSet
+        |> Seq.take 18
+        |> Seq.last
+
+    printfn "Part 2: %d" (count finalImage2)
+    0

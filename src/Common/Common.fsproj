@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Geometry.fs" />
     <Compile Include="KnotHashing.fs" />
     <Compile Include="ParsingHelpers.fs" />
     <Compile Include="TextHandling.fs" />

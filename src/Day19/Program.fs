@@ -2,6 +2,7 @@
 
 open Swensen.Unquote
 
+open Geometry
 open TextHandling
 
 type MapElement =
@@ -32,7 +33,6 @@ let findStart (m: Map<int*int, MapElement>) =
         |> Seq.find (fun x -> Map.containsKey (x, 0) m)
     (x, 0)
 
-type Direction = Up | Down | Left | Right
 let dv d =
     match d with
     | Up -> (0, -1)

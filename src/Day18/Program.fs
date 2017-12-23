@@ -179,7 +179,7 @@ let processInstruction2 = processInstructionCore send receive
 let run (instructions: Instruction[]) =
     Seq.unfold
         (fun (state: ProcessState) ->
-            if state.ip > (bigint instructions.Length) then None
+            if state.ip >= (bigint instructions.Length) then None
             else
                 let (nextState, _) = processInstruction instructions.[int state.ip] state
                 Some (nextState, nextState.Value))

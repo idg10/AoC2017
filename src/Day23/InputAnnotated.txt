@@ -1,0 +1,106 @@
+﻿set b 79
+set c b
+
+// if (a <> 0) then
+// 2
+jnz a 2
+// 3
+jnz 1 5
+//4
+// {
+	// b = 79 * 100 + 100000
+	//   = 107900
+	mul b 100
+	sub b -100000
+
+	// c = b + 17000
+	//   = 124900
+	set c b
+	sub c -17000
+// }
+
+// 8
+// So this will iterate through 1,000 times, adding 17 to b each time
+// int b = 107900;
+// {
+	// f = 1;
+	// d = 2;
+	set f 1
+	set d 2
+
+	// 10
+	// This loop tests for each d from 2 to (b-1) whether d divides b
+	// exactly. f will be 0 if such a d exists, 1 otherwise. In other
+	// words, f is 1 if b is prime, and 0 if it is not.
+	// for (int d = 2; d <> b; ++d)
+	// {
+		set e 2
+
+		// 11
+		// Initially at least, b is a large number (107900).
+		// This starts with e at 2 and increments until it equals b.
+		// The code in this loop modifies only three registers: g, e, and f.
+		// The code after the loop immediately modifies g, and e is not used
+		// outside of this loop, so the only interesting result of this work
+		// is what it sets f to.
+		// f is 1 on entry, and this loop will set f to 0 if it encounters some
+		// e for which d*e = b.
+		// In other words, this determines whether d divides b exactly. So we could
+		// replace this whole loop with:
+		// f = b % d = 0
+		// for (int e = 2; e <> b; ++e)
+		// {
+
+			set g d
+			mul g e
+			sub g b
+
+			// if ((d * e) == b)
+			jnz g 2
+			// {
+				//f = 0;
+				set f 0
+			// }
+
+			// 16
+			sub e -1
+			// g = e - b
+			set g e
+			sub g b
+			jnz g -8    // To 11
+		// }
+
+		// d += 1;
+		sub d -1
+		// g = d - b
+		set g d
+		sub g b
+		jnz g -13   // to 10
+	// }
+
+
+	// So h is a count of the number of non-primes as we run the outer loop.
+	// And since the outer loop iterates from the start value of b in increments
+	// of 17, this counts the number of non-primes between b and c where subtracting
+	// b from the non-prime in question produces a number divisible by 17.
+	// if (f == 0)
+	// {
+	jnz f 2
+		// h += 1;
+		sub h -1
+	// }
+
+	//26
+	set g b
+	sub g c
+
+	if (b == c) { break; }
+	jnz g 2
+	jnz 1 3
+
+	// b += 17
+	// 30
+	sub b -17
+	// 31
+	jnz 1 -23   // to 8
+// }  while (b <> c)

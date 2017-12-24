@@ -87,6 +87,20 @@ let bridgeStrength (c:Components) (bridge: BridgeElement list) =
 let findStrongestBridge (c:Components) (bridges: (BridgeElement list) seq) =
     bridges |> Seq.maxBy (bridgeStrength c)
 
+let findLongestBridges (c:Components) (bridges: (BridgeElement list) seq) =
+    bridges
+    |> Seq.fold
+        (fun (highestLengthSoFar: int, found: (BridgeElement list) list) (bridge: BridgeElement list) ->
+            let newLength = List.length bridge
+            if newLength > highestLengthSoFar then
+                (newLength, [bridge])
+            else if newLength = highestLengthSoFar then
+                (highestLengthSoFar, bridge::found)
+            else
+                (highestLengthSoFar, found))
+        (0, [])
+    |> snd
+
 let printBridgeToString (c:Components) (bridge: BridgeElement list) =
     for element in bridge do
         let t0, t1 = c.items.[element.itemIndex]
@@ -107,9 +121,25 @@ let main argv =
     printBridgeToString testComponents strongestBridgeTest
     bridgeStrength testComponents strongestBridgeTest =! 31
 
+    printfn ""
+    printfn "Longest (test):"
+    let longestInTest = findLongestBridges testComponents testBridges
+    for c in longestInTest do
+        printBridgeToString testComponents c
+    let strongestLongestBridgeTest = findStrongestBridge testComponents longestInTest
+    printfn "Strongest Longest (test):"
+    printBridgeToString testComponents strongestLongestBridgeTest
+
+
     let components = getEmbeddedRows () |> loadComponents
     let bridges = findChains components []
     let strongestBridge = findStrongestBridge components bridges
     printfn "Part 1: %d" (bridgeStrength components strongestBridge)
+
+    let longest = findLongestBridges components bridges
+    let strongestLongestBridge = findStrongestBridge components longest
+    printfn "Strongest Longest:"
+    printBridgeToString components strongestLongestBridge
+    printfn "Part 2: %d" (bridgeStrength components strongestLongestBridge)
     
     0
